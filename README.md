@@ -4,7 +4,7 @@
 
 - Clone the repository in xampp\htdocs
 - Run the Apache server with Xampp
-- Open the browser or Postman and go to localhost/php-framework
+- Open the browser or Postman and go to localhost/Factory-PHP-Framework
 
 ## Routes
 

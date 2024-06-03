@@ -6,7 +6,7 @@ class Router
 {
     private static ?Router $instance = null;
     public array $routes = [];
-    private string $baseUrl = '/php-framework';
+    private string $baseUrl = '/Factory-PHP-Framework';
 
     private function __construct() {}
 

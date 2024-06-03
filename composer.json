@@ -1,0 +1,19 @@
+{
+    "name": "factory/php-framework",
+    "description": "A simple php framework for Factory internship",
+    "type": "project",
+    "license": "Apache 2.0",
+    "autoload": {
+        "psr-4": {
+            "Factory\\PhpFramework\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Mateo",
+            "email": "mateo.dokic@factory.dev"
+        }
+    ],
+    "minimum-stability": "dev",
+    "require": {}
+}

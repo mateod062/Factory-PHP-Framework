@@ -1,13 +1,7 @@
 <?php
 
-use Factory\PhpFramework\Router;
+use Factory\PhpFramework\Router\Router;
 
-Router::add('GET', '/about', function($request) {
-    return "About Us";
-});
-Router::get('/', function($request) {
-    return "Welcome";
-});
-Router::post('/contact', function($request) {
-    return "Contact Us";
-});
+Router::get('/', 'IndexController@indexAction');
+Router::get('/json', 'IndexController@indexJsonAction');
+Router::get('/html', 'IndexController@indexHtmlAction');

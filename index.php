@@ -2,9 +2,9 @@
 
 require 'vendor/autoload.php';
 
-use Factory\PhpFramework\Router;
-use Factory\PhpFramework\Request;
-use Factory\PhpFramework\Response;
+use Factory\PhpFramework\Router\Request;
+use Factory\PhpFramework\Router\Response;
+use Factory\PhpFramework\Router\Router;
 
 // Create the request
 $request = new Request();
@@ -14,8 +14,6 @@ $router = Router::getInstance();
 require 'routes.php';
 
 // Resolve the request
-$responseContent = $router->resolve($request);
-// Create the response with the result of the router
-$response = new Response($responseContent);
+$response = $router->resolve($request);
 // Echo the response content
 $response->send();

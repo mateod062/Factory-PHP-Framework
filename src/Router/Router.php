@@ -38,7 +38,7 @@ class Router
         $url = self::getInstance()->baseUrl . $url;
         self::getInstance()->routes[] = [
             'method' => $method,
-            'url' => (new Router)->convertToRegex($url),
+            'url' => $url,
             'callback' => $callback
         ];
     }
@@ -81,43 +81,79 @@ class Router
                 if (is_string($route['callback'])) {
                     return $this->resolveStringCallback($route['callback'], $request, $params);
                 }
-                return call_user_func_array($route['callback'], array_merge([$request], $params));
+                $request->addParams($params);
+                return call_user_func_array($route['callback'], [$request]);
             }
         }
 
         return $this->default404Handler("Route not found");
     }
 
-    private function matchRoute($routeUrl, $requestUrl, &$params): bool
+    /**
+     * Helper function to confirm if a route matches the request URL
+     *
+     * @param string $routeUrl The route URL
+     * @param string $requestUrl The request URL
+     * @param mixed $params The route parameters
+     * @return bool
+     */
+    private function matchRoute(string $routeUrl, string $requestUrl, mixed &$params): bool
     {
         $routePattern = $this->convertToRegex($routeUrl);
         if (preg_match('#^' . $routePattern . '$#', $requestUrl, $matches)) {
             array_shift($matches);
-            $params = $matches;
+            // Extract placeholder names from route URL
+            preg_match_all('/{([^\/]+)}/', $routeUrl, $placeholders);
+            $placeholderNames = $placeholders[1];
+            // Combine placeholder names with their values
+            $params = array_combine($placeholderNames, $matches);
+
             return true;
         }
         return false;
     }
 
+    /**
+     * Convert a route URL to a regex pattern
+     *
+     * @param string $url The route URL
+     * @return array|string|null
+     */
     private function convertToRegex($url): array|string|null
     {
+        // Replace placeholders with 'any' regex
         return preg_replace('/{[^\/]+}/', '([^\/]+)', $url);
     }
 
-    private function resolveStringCallback($callback, $request, $params): mixed
+    /**
+     * Resolve a string callback in the format 'Controller@method'
+     *
+     * @param string $callback The callback function
+     * @param Request $request The request object
+     * @param array $params The route parameters
+     * @return mixed
+     */
+    private function resolveStringCallback(string $callback, Request $request, array $params): mixed
     {
         list($controller, $method) = explode('@', $callback);
         $controller = "Factory\\PhpFramework\\Controller\\$controller";
         if (class_exists($controller)) {
             $controller = new $controller();
             if (method_exists($controller, $method)) {
-                return call_user_func_array([$controller, $method], array_merge([$request], $params));
+                $request->addParams($params);
+                return call_user_func_array([$controller, $method], [$request]);
             }
         }
 
         return $this->default404Handler("Invalid route callback: $callback");
     }
 
+    /**
+     * Default 404 handler
+     *
+     * @param string $message The error message
+     * @return JsonResponse
+     */
     private function default404Handler(string $message): JsonResponse
     {
         http_response_code(404);

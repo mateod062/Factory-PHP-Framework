@@ -6,7 +6,7 @@ use Factory\PhpFramework\Router\Interface\RequestInterface;
 
 class Request implements RequestInterface
 {
-    private array $params = [];
+    private array $params;
 
     public function __construct()
     {
@@ -24,8 +24,24 @@ class Request implements RequestInterface
         return $path ?: '/';
     }
 
+    public function get(string $key): mixed
+    {
+        return $this->params[$key] ?? null;
+    }
+
+    public function getBody(): mixed
+    {
+        $body = file_get_contents('php://input');
+        return json_decode($body, true);
+    }
+
     public function getParams(): array
     {
         return $this->params;
+    }
+
+    public function addParams(array $params): void
+    {
+        $this->params = array_merge($this->params, $params);
     }
 }

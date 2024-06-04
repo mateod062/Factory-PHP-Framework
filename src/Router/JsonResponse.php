@@ -9,7 +9,7 @@ class JsonResponse implements ResponseInterface
     public function __construct(private $data) {}
 
     /**
-     * @inheritDoc
+     * Send the response in JSON format
      */
     public function send(): void
     {

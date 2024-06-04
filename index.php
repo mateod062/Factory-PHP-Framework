@@ -3,7 +3,6 @@
 require 'vendor/autoload.php';
 
 use Factory\PhpFramework\Router\Request;
-use Factory\PhpFramework\Router\Response;
 use Factory\PhpFramework\Router\Router;
 
 // Create the request

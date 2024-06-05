@@ -2,6 +2,7 @@
 
 namespace Factory\PhpFramework\Database;
 
+use Dotenv\Dotenv;
 use PDO;
 use PDOException;
 use PDOStatement;
@@ -14,7 +15,15 @@ class Connection
     private function __construct()
     {
         try {
-            $this->connection = new PDO('mysql:host=localhost;dbname=php_framework', 'root', 'factory123456789');
+            $dotenv = Dotenv::createImmutable(__DIR__ . '/../..');
+            $dotenv->load();
+
+            $host = $_ENV['DB_HOST'];
+            $dbname = $_ENV['DB_NAME'];
+            $user = $_ENV['DB_USER'];
+            $password = $_ENV['DB_PASSWORD'];
+
+            $this->connection = new PDO('mysql:host=' . $host . ';dbname=' . $dbname, $user, $password);
             $this->connection->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         } catch (PDOException $e) {
             die('Connection failed: ' . $e->getMessage());

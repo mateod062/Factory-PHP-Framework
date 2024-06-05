@@ -16,12 +16,32 @@ class EventController
     }
 
     /**
-     * Fetch an event by ID
+     * Fetch an event by ID with named placeholders
      *
      * @param Request $request
      * @return JsonResponse
      */
-    public function fetchEventAction(Request $request): JsonResponse
+    public function fetchEventActionAssoc(Request $request): JsonResponse
+    {
+        $eventId = $request->get('id');
+        $query = "SELECT * FROM event WHERE id = :id";
+        $result = $this->dbConnection->fetchAssoc($query, ['id' => $eventId]);
+
+        if (!$result) {
+            http_response_code(404);
+            return new JsonResponse(['error' => 'Event not found']);
+        }
+
+        return new JsonResponse($result);
+    }
+
+    /**
+     * Fetch an event by ID with unnamed placeholders
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function fetchEventActionNum(Request $request): JsonResponse
     {
         $eventId = $request->get('id');
         $query = "SELECT * FROM event WHERE id = ?";

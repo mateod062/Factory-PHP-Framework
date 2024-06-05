@@ -8,5 +8,6 @@ Router::get('/html', 'IndexController@indexHtmlAction');
 Router::post('/insert', 'EventController@insertEventAction');
 Router::post('/insert-many', 'EventController@batchInsertEventsAction');
 Router::get('/fetch', 'EventController@fetchAllEventsAction');
-Router::get('/fetch-one/{id}', 'EventController@fetchEventAction');
+Router::get('/fetch-one/num/{id}', 'EventController@fetchEventActionNum');
+Router::get('/fetch-one/assoc/{id}', 'EventController@fetchEventActionAssoc');
 Router::get('/update/{id}', 'EventController@updateEventAction');

@@ -56,6 +56,7 @@ class Connection
     public function fetchAssoc(string $query, array $params = []): mixed
     {
         $stmt = $this->connection->prepare($query);
+
         $stmt->execute($params);
 
         return $stmt->fetch(PDO::FETCH_ASSOC);
@@ -76,31 +77,6 @@ class Connection
 
 
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    }
-
-    /**
-     * Helper function to bind values to a prepared statement regardless of array type
-     *
-     * @param PDOStatement $stmt The prepared statement
-     * @param array $params The query parameters
-     * @return void
-     */
-    private function bindValues(PDOStatement $stmt, array $params): void
-    {
-        if (!empty($params)) {
-            // Check if the array is associative
-            if (array_keys($params)!== range(0, count($params) - 1)) {
-                // Use named placeholders for associative arrays
-                foreach ($params as $key => $value) {
-                    $stmt->bindValue(':'. $key, $value);
-                }
-            } else {
-                // Use positional placeholders for indexed arrays
-                foreach ($params as $index => $value) {
-                    $stmt->bindValue($index + 1, $value);
-                }
-            }
-        }
     }
 
     /**

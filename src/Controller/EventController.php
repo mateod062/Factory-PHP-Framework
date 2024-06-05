@@ -2,115 +2,94 @@
 
 namespace Factory\PhpFramework\Controller;
 
-use Factory\PhpFramework\Database\Connection;
+use Factory\PhpFramework\Model\Event;
 use Factory\PhpFramework\Router\JsonResponse;
 use Factory\PhpFramework\Router\Request;
+use Factory\PhpFramework\Router\Response;
+use Factory\PhpFramework\Twig;
 
 class EventController
 {
-    private Connection $dbConnection;
-
-    public function __construct()
+    public function index(): Response
     {
-        $this->dbConnection = Connection::getInstance();
+        $events = Event::all();
+        $eventsArray = array_map(fn($event) => $event->toArray(), $events);
+        return new Response(Twig::render('event/index.html.twig', ['events' => $eventsArray]));
     }
 
-    /**
-     * Fetch an event by ID with named placeholders
-     *
-     * @param Request $request
-     * @return JsonResponse
-     */
-    public function fetchEventActionAssoc(Request $request): JsonResponse
+    public function show(Request $request): JsonResponse|Response
     {
-        $eventId = $request->get('id');
-        $query = "SELECT * FROM event WHERE id = :id";
-        $result = $this->dbConnection->fetchAssoc($query, ['id' => $eventId]);
+        $id = $request->get('id');
+        $event = Event::find($id);
+        if (!$event) {
+            return new JsonResponse(['error' => 'Event not found'], 404);
+        }
+        return new Response(Twig::render('event/show.html.twig', ['event' => $event->toArray()]));
+    }
 
-        if (!$result) {
-            http_response_code(404);
+    public function create(): Response
+    {
+        return new Response(Twig::render('event/create.html.twig'));
+    }
+
+    public function store(Request $request): JsonResponse
+    {
+        $event = new Event([
+            'name' => $request->get('name'),
+            'description' => $request->get('description'),
+        ]);
+        $event->save();
+        header('Location: /Factory-PHP-Framework/events');
+        exit();
+    }
+
+    public function edit(Request $request): JsonResponse|Response
+    {
+        $id = $request->get('id');
+        $event = Event::find($id);
+        if (!$event) {
+            return new JsonResponse(['error' => 'Event not found']);
+        }
+        return new Response(Twig::render('event/edit.html.twig', ['event' => $event->toArray()]));
+    }
+
+    public function update(Request $request): JsonResponse
+    {
+        $id = $request->get('id');
+        $event = Event::find($id);
+        if (!$event) {
             return new JsonResponse(['error' => 'Event not found']);
         }
 
-        return new JsonResponse($result);
+        $event->name = $request->get('name');
+        $event->description = $request->get('description');
+
+        $event->update();
+        header('Location: /Factory-PHP-Framework/events');
+        exit();
     }
 
-    /**
-     * Fetch an event by ID with unnamed placeholders
-     *
-     * @param Request $request
-     * @return JsonResponse
-     */
-    public function fetchEventActionNum(Request $request): JsonResponse
+    public function delete(Request $request): JsonResponse
     {
-        $eventId = $request->get('id');
-        $query = "SELECT * FROM event WHERE id = ?";
-        $result = $this->dbConnection->fetchAssoc($query, [$eventId]);
-
-        if (!$result) {
-            http_response_code(404);
-            return new JsonResponse(['error' => 'Event not found']);
+        $id = $request->get('id');
+        $event = Event::find($id);
+        if (!$event) {
+            return new JsonResponse(['error' => 'Event not found'], 404);
         }
-
-        return new JsonResponse($result);
+        $event->delete();
+        header('Location: /Factory-PHP-Framework/events');
+        exit();
     }
 
-    /**
-     * Fetch all events
-     *
-     * @param Request $request
-     * @return JsonResponse
-     */
-    public function fetchAllEventsAction(Request $request): JsonResponse
+    public function softDelete(Request $request): JsonResponse|Response
     {
-        $query = "SELECT * FROM event";
-        $result = $this->dbConnection->fetchAssocAll($query);
-        return new JsonResponse($result);
-    }
-
-    /**
-     * Insert an event
-     *
-     * @param Request $request
-     * @return JsonResponse
-     */
-    public function insertEventAction(Request $request): JsonResponse
-    {
-        $data = [
-            'name' => $request->get('name'),
-            'description' => $request->get('description'),
-        ];
-        $result = $this->dbConnection->insert('event', $data);
-        return new JsonResponse(['success' => $result]);
-    }
-
-    /**
-     * Batch insert events
-     *
-     * @param Request $request
-     * @return JsonResponse
-     */
-    public function batchInsertEventsAction(Request $request): JsonResponse
-    {
-        $data = $request->getBody()['data'];
-        $result = $this->dbConnection->insert('event', $data);
-        return new JsonResponse(['success' => $result]);
-    }
-
-    /**
-     * Update an event
-     *
-     * @param Request $request
-     * @return JsonResponse
-     */
-    public function updateEventAction(Request $request): JsonResponse
-    {
-        $eventId = $request->get('id');
-        $data = [
-            'name' => $request->get('name'),
-            'description' => $request->get('description'),
-        ];
-        $result = $this->dbConnection->update('event', $data, ['id' => $eventId]);
-        return new JsonResponse(['success' => $result]);
+        $id = $request->get('id');
+        $event = Event::find($id);
+        if (!$event) {
+            return new JsonResponse(['error' => 'Event not found'], 404);
+        }
+        $event->softDelete();
+        header('Location: /Factory-PHP-Framework/events');
+        exit();
     }
 }

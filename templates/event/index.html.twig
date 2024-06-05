@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Events</title>
+</head>
+<body>
+<h1>Events</h1>
+<a href="/Factory-PHP-Framework/events/create">Create Event</a>
+<ul>
+    {% for event in events %}
+        <li>
+            {{ event.name }} - {{ event.description }}
+            <a href="/Factory-PHP-Framework/events/{{ event.id }}">Show</a>
+            <a href="/Factory-PHP-Framework/events/edit/{{ event.id }}">Edit</a>
+            <form action="/Factory-PHP-Framework/events/delete/{{ event.id }}" method="post" style="display:inline;">
+                <button type="submit">Delete</button>
+            </form>
+        </li>
+    {% endfor %}
+</ul>
+</body>
+</html>

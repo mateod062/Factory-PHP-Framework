@@ -172,4 +172,22 @@ class Connection
 
         return $stmt->execute(array_merge(array_values($data), array_values($conditions)));
     }
+
+    /**
+     * Execute a DELETE query with conditions
+     *
+     * @param string $table The table name
+     * @param array $conditions The conditions to match
+     * @return bool
+     */
+    public function delete(string $table, array $conditions): bool
+    {
+        $conditionClause = implode(' AND ', array_map(fn($key) => "$key = ?", array_keys($conditions)));
+
+        $query = "DELETE FROM $table WHERE $conditionClause";
+
+        $stmt = $this->connection->prepare($query);
+
+        return $stmt->execute(array_values($conditions));
+    }
 }

@@ -2,6 +2,8 @@
 
 namespace Factory\PhpFramework\Router;
 
+use InvalidArgumentException;
+
 class Router
 {
     private static ?Router $instance = null;
@@ -35,12 +37,33 @@ class Router
      */
     public static function add(string $method, string $url, callable|string $callback): void
     {
+        $instance = self::getInstance();
+        $normalizedUrl = $instance->normalizeUrl($url);
+
+        // Check for duplicate routes
+        foreach ($instance->routes as $route) {
+            if ($route['method'] === $method && $instance->normalizeUrl($route['url']) === $normalizedUrl) {
+                throw new InvalidArgumentException("Route already exists: $method $url");
+            }
+        }
+
         $url = self::getInstance()->baseUrl . $url;
         self::getInstance()->routes[] = [
             'method' => $method,
             'url' => $url,
             'callback' => $callback
         ];
+    }
+
+    /**
+     * Normalize the URL by converting placeholders to a common format
+     *
+     * @param string $url The route URL
+     * @return string
+     */
+    private function normalizeUrl(string $url): string
+    {
+        return preg_replace('/{[^\/]+}/', '{}', $url);
     }
 
     /**
@@ -68,6 +91,30 @@ class Router
     }
 
     /**
+     * Add a new PUT route
+     *
+     * @param string $url The request URL
+     * @param callable|string $callback The callback function
+     * @return void
+     */
+    public static function put(string $url, callable|string $callback): void
+    {
+        self::add('PUT', $url, $callback);
+    }
+
+    /**
+     * Add a new PATCH route
+     *
+     * @param string $url The request URL
+     * @param callable|string $callback The callback function
+     * @return void
+     */
+    public static function delete(string $url, callable|string $callback): void
+    {
+        self::add('DELETE', $url, $callback);
+    }
+
+    /**
      * Resolve the request
      *
      * @param Request $request The request object
@@ -75,15 +122,37 @@ class Router
      */
     public function resolve(Request $request): mixed
     {
+        $exactMatch = null;
+        $dynamicMatch = null;
+
         foreach ($this->routes as $route) {
-            if ($this->matchRoute($route['url'], $request->getUrl(), $params) && $route['method'] === $request->getMethod()) {
-                http_response_code(200);
-                if (is_string($route['callback'])) {
-                    return $this->resolveStringCallback($route['callback'], $request, $params);
+            if ($route['method'] === $request->getMethod()) {
+                if ($route['url'] === $request->getUrl()) {
+                    $exactMatch = $route;
+                    break;
+                } elseif ($this->matchRoute($route['url'], $request->getUrl(), $params)) {
+                    $dynamicMatch = ['route' => $route, 'params' => $params];
                 }
-                $request->addParams($params);
-                return call_user_func_array($route['callback'], [$request]);
             }
+        }
+
+        // If route has no placeholders
+        if ($exactMatch) {
+            http_response_code(200);
+            if (is_string($exactMatch['callback'])) {
+                return $this->resolveStringCallback($exactMatch['callback'], $request, []);
+            }
+            return call_user_func_array($exactMatch['callback'], [$request]);
+        }
+
+        // If route has placeholders
+        if ($dynamicMatch) {
+            http_response_code(200);
+            if (is_string($dynamicMatch['route']['callback'])) {
+                return $this->resolveStringCallback($dynamicMatch['route']['callback'], $request, $dynamicMatch['params']);
+            }
+            $request->addParams($dynamicMatch['params']);
+            return call_user_func_array($dynamicMatch['route']['callback'], [$request]);
         }
 
         return $this->default404Handler("Route not found");
@@ -119,7 +188,7 @@ class Router
      * @param string $url The route URL
      * @return array|string|null
      */
-    private function convertToRegex($url): array|string|null
+    private function convertToRegex(string $url): array|string|null
     {
         // Replace placeholders with 'any' regex
         return preg_replace('/{[^\/]+}/', '([^\/]+)', $url);
